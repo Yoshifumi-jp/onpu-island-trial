@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title></title>
+  <link rel="stylesheet" href="css/style.css?v=0.2.4">
+</head>
+<body>
+  <div id="stage">
+    <!-- 1. はじめる画面 -->
+    <section id="screen-start" class="screen active">
+      <div class="start-content">
+        <svg class="start-mascot" width="180" height="210" viewBox="0 0 120 140" aria-hidden="true">
+          <path d="M84 22 V70" stroke="#1F2A44" stroke-width="6" stroke-linecap="round"/>
+          <path d="M84 22 C100 30 108 42 104 58" stroke="#1F2A44" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <ellipse cx="60" cy="96" rx="44" ry="36" fill="#FFC93C" stroke="#1F2A44" stroke-width="5"/>
+          <circle cx="46" cy="92" r="6" fill="#1F2A44"/>
+          <circle cx="74" cy="92" r="6" fill="#1F2A44"/>
+          <circle cx="48" cy="90" r="2" fill="#fff"/>
+          <circle cx="76" cy="90" r="2" fill="#fff"/>
+          <path d="M50 106 Q60 116 70 106" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <circle cx="34" cy="106" r="6" fill="#FF8A7A" opacity=".6"/>
+          <circle cx="86" cy="106" r="6" fill="#FF8A7A" opacity=".6"/>
+        </svg>
+        <h1 class="start-title" data-text="start.title"></h1>
+        <p class="start-lead" data-text="start.lead"></p>
+        <button type="button" id="btn-start" class="start-button" data-text="start.button"></button>
+        <p class="start-note" data-text="start.note"></p>
+      </div>
+    </section>
+
+    <!-- 2. 地図（ホーム）画面 -->
+    <section id="screen-map" class="screen">
+      <div class="map-header">
+        <div class="map-mascot-group">
+          <svg width="96" height="112" viewBox="0 0 120 140" aria-hidden="true">
+            <path d="M84 22 V70" stroke="#1F2A44" stroke-width="6" stroke-linecap="round"/>
+            <path d="M84 22 C100 30 108 42 104 58" stroke="#1F2A44" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <ellipse cx="60" cy="96" rx="44" ry="36" fill="#FFC93C" stroke="#1F2A44" stroke-width="5"/>
+            <circle cx="46" cy="92" r="6" fill="#1F2A44"/>
+            <circle cx="74" cy="92" r="6" fill="#1F2A44"/>
+            <circle cx="48" cy="90" r="2" fill="#fff"/>
+            <circle cx="76" cy="90" r="2" fill="#fff"/>
+            <path d="M50 106 Q60 116 70 106" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <circle cx="34" cy="106" r="6" fill="#FF8A7A" opacity=".6"/>
+            <circle cx="86" cy="106" r="6" fill="#FF8A7A" opacity=".6"/>
+          </svg>
+          <div class="map-bubble" data-text="map.bubble"></div>
+        </div>
+        <div class="map-header-right">
+          <div class="map-star-box">
+            <span class="map-star-icon">★</span>
+            <span id="map-star-total"></span>
+          </div>
+          <button type="button" id="btn-settings" class="map-settings-btn" data-aria-label="map.settings">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 海の点々 -->
+      <div class="map-dot" style="left: 330px; top: 300px"></div>
+      <div class="map-dot" style="left: 370px; top: 330px"></div>
+      <div class="map-dot" style="left: 410px; top: 355px"></div>
+      <div class="map-dot" style="left: 720px; top: 360px"></div>
+      <div class="map-dot" style="left: 760px; top: 330px"></div>
+      <div class="map-dot" style="left: 800px; top: 300px"></div>
+
+      <!-- ドレミの島 -->
+      <button type="button" id="island-doremi" class="map-island island-doremi" data-aria-label="map.island.doremi">
+        <span class="island-symbol">
+          <svg viewBox="0 0 611 1732" width="21" height="60" aria-hidden="true">
+            <path fill="currentColor" d="M264 533Q250 480 241 428Q232 376 232 322Q232 275 238 234Q245 192 257 157Q270 117 291 82Q312 46 336 23Q359 0 377 0Q401 0 443 85Q464 128 474 178Q484 228 484 285Q484 356 465 426Q446 497 410 559Q373 621 322 668L357 836Q372 834 382 833Q392 832 397 832Q458 832 506 866Q554 901 582 957Q611 1013 611 1080Q611 1157 572 1218Q532 1280 453 1309Q458 1326 482 1451Q488 1481 491 1498Q494 1516 495 1529Q496 1542 496 1559Q496 1609 472 1648Q447 1688 406 1710Q364 1732 313 1732Q261 1732 221 1712Q181 1693 158 1658Q135 1624 135 1579Q135 1531 162 1499Q188 1467 237 1467Q279 1467 306 1498Q332 1528 332 1570Q332 1606 307 1633Q282 1660 242 1660H232Q258 1699 314 1699Q383 1699 422 1654Q461 1609 461 1539Q461 1522 457 1494Q453 1465 443 1425Q433 1385 428 1359Q422 1333 420 1322Q386 1332 340 1332Q254 1332 172 1282Q92 1232 46 1150Q0 1068 0 973Q0 883 41 804Q82 725 142 659Q203 593 264 533ZM291 508Q314 496 340 464Q366 431 390 389Q414 347 429 304Q444 262 444 228Q444 192 433 171Q422 150 395 150Q371 150 348 172Q326 194 308 230Q291 267 281 312Q271 357 271 404Q271 436 278 462Q284 488 291 508ZM445 1279Q543 1237 543 1107Q543 1064 521 1028Q499 993 462 972Q425 951 379 951ZM348 955Q321 961 297 980Q273 1000 258 1028Q244 1055 244 1086Q244 1111 257 1138Q270 1164 289 1180Q302 1192 315 1198Q330 1205 330 1211Q330 1214 320 1217Q282 1208 252 1183Q221 1158 204 1122Q186 1087 186 1047Q186 1004 204 964Q221 924 252 892Q284 860 324 844L295 693Q179 787 124 878Q70 968 70 1057Q70 1122 104 1178Q138 1234 197 1268Q256 1303 330 1303Q350 1303 370 1299Q391 1295 414 1289Z"/>
+          </svg>
+        </span>
+        <span class="island-name" data-text="map.island.doremi"></span>
+        <span class="island-stars stars-doremi">☆☆☆</span>
+      </button>
+
+      <!-- リズムの森 -->
+      <button type="button" id="island-rhythm" class="map-island island-rhythm" data-aria-label="map.island.rhythm">
+        <span class="island-symbol symbol-rhythm">
+          <svg viewBox="0 0 180 549" width="18" height="54" aria-hidden="true">
+            <path fill="currentColor" d="M143 0H180V415Q180 475 144 512Q109 549 56 549Q28 549 14 536Q0 522 0 500Q0 474 14 453Q28 432 51 419Q74 406 99 406Q121 406 143 415Z"/>
+          </svg>
+          <svg viewBox="0 0 484 587" width="45" height="54" aria-hidden="true">
+            <path fill="currentColor" d="M448 115 179 80V409Q179 466 146 504Q112 542 56 542Q0 542 0 494Q0 470 13 448Q26 427 48 414Q70 400 96 400Q121 400 143 409V0L484 45V453Q484 494 466 524Q448 555 420 571Q393 587 362 587Q306 587 306 538Q306 498 336 471Q366 444 404 444Q427 444 448 453Z"/>
+          </svg>
+        </span>
+        <span class="island-name" data-text="map.island.rhythm"></span>
+        <span class="island-stars stars-rhythm">☆☆☆</span>
+      </button>
+
+      <!-- パズルの谷 -->
+      <button type="button" id="island-puzzle" class="map-island island-puzzle" data-aria-label="map.island.puzzle">
+        <span class="island-symbol-text">4/4</span>
+        <span class="island-name" data-text="map.island.puzzle"></span>
+        <span class="island-stars stars-puzzle">☆☆☆</span>
+      </button>
+
+      <!-- 強弱の山（鍵） -->
+      <div class="map-island-locked locked-dynamics" aria-disabled="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#4A5568" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+        <span class="locked-name" data-text="map.island.dynamics"></span>
+        <span class="locked-sub" data-text="map.locked"></span>
+      </div>
+
+      <!-- 作曲の城（鍵） -->
+      <div class="map-island-locked locked-compose" aria-disabled="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#4A5568" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+        <span class="locked-name" data-text="map.island.compose"></span>
+        <span class="locked-sub" data-text="map.locked"></span>
+      </div>
+
+      <!-- 左下メニューボタン -->
+      <div class="map-footer-left">
+        <button type="button" id="btn-stamp" class="map-sub-btn">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 19.5V5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/>
+            <circle cx="13" cy="10" r="3"/>
+          </svg>
+          <span data-text="map.stamp"></span>
+        </button>
+        <button type="button" id="btn-instruments" class="map-sub-btn">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+          </svg>
+          <span data-text="map.instruments"></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. おうちの方の画面（仮） -->
+    <section id="screen-settings" class="screen">
+      <button type="button" id="btn-settings-back" class="settings-back-btn">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        <span data-text="common.back"></span>
+      </button>
+      <div class="settings-card">
+        <h2 class="settings-title" data-text="settings.title"></h2>
+        <p class="settings-body" data-text="settings.body"></p>
+        <h3 class="settings-sound-title" data-text="settings.sound.title"></h3>
+        <p class="settings-sound-note" data-text="settings.sound.note"></p>
+        <div id="settings-keys" class="settings-keys"></div>
+        <div class="settings-sound-buttons">
+          <button type="button" id="btn-sound-drum" class="settings-sound-btn" data-text="settings.sound.drum"></button>
+          <button type="button" id="btn-sound-correct" class="settings-sound-btn" data-text="settings.sound.correct"></button>
+          <button type="button" id="btn-sound-clear" class="settings-sound-btn" data-text="settings.sound.clear"></button>
+          <button type="button" id="btn-sound-unlock" class="settings-sound-btn" data-text="settings.sound.unlock"></button>
+        </div>
+        <p id="settings-version" class="settings-version"></p>
+      </div>
+    </section>
+
+    <!-- 4. レベルを選ぶ画面 -->
+    <section id="screen-level" class="screen">
+      <div class="quiz-header">
+        <button type="button" id="btn-level-map" class="quiz-map-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+          <span data-text="common.toMap"></span>
+        </button>
+        <h2 class="quiz-title level-title" data-text="map.island.doremi"></h2>
+      </div>
+      <p class="level-lead" data-text="level.lead"></p>
+      <div id="level-cards" class="level-cards"></div>
+    </section>
+
+    <!-- 5. 問題の画面（島に共通） -->
+    <section id="screen-quiz" class="screen">
+      <div class="quiz-header">
+        <button type="button" id="btn-quiz-map" class="quiz-map-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+          <span data-text="common.toMap"></span>
+        </button>
+        <h2 id="quiz-title" class="quiz-title"></h2>
+        <div class="quiz-progress">
+          <div id="quiz-dots" class="quiz-dots"></div>
+          <span id="quiz-progress-text" class="quiz-progress-text"></span>
+        </div>
+      </div>
+
+      <div class="quiz-card">
+        <svg id="quiz-staff" class="quiz-staff" width="750" height="370" viewBox="0 0 750 370" aria-hidden="true">
+          <rect x="60" y="150" width="630" height="4" fill="#1F2A44"/>
+          <rect x="60" y="182" width="630" height="4" fill="#1F2A44"/>
+          <rect x="60" y="214" width="630" height="4" fill="#1F2A44"/>
+          <rect x="60" y="246" width="630" height="4" fill="#1F2A44"/>
+          <rect x="60" y="278" width="630" height="4" fill="#1F2A44"/>
+          <svg x="72" y="109" width="78" height="222" viewBox="0 0 611 1732">
+            <path fill="#1F2A44" d="M264 533Q250 480 241 428Q232 376 232 322Q232 275 238 234Q245 192 257 157Q270 117 291 82Q312 46 336 23Q359 0 377 0Q401 0 443 85Q464 128 474 178Q484 228 484 285Q484 356 465 426Q446 497 410 559Q373 621 322 668L357 836Q372 834 382 833Q392 832 397 832Q458 832 506 866Q554 901 582 957Q611 1013 611 1080Q611 1157 572 1218Q532 1280 453 1309Q458 1326 482 1451Q488 1481 491 1498Q494 1516 495 1529Q496 1542 496 1559Q496 1609 472 1648Q447 1688 406 1710Q364 1732 313 1732Q261 1732 221 1712Q181 1693 158 1658Q135 1624 135 1579Q135 1531 162 1499Q188 1467 237 1467Q279 1467 306 1498Q332 1528 332 1570Q332 1606 307 1633Q282 1660 242 1660H232Q258 1699 314 1699Q383 1699 422 1654Q461 1609 461 1539Q461 1522 457 1494Q453 1465 443 1425Q433 1385 428 1359Q422 1333 420 1322Q386 1332 340 1332Q254 1332 172 1282Q92 1232 46 1150Q0 1068 0 973Q0 883 41 804Q82 725 142 659Q203 593 264 533ZM291 508Q314 496 340 464Q366 431 390 389Q414 347 429 304Q444 262 444 228Q444 192 433 171Q422 150 395 150Q371 150 348 172Q326 194 308 230Q291 267 281 312Q271 357 271 404Q271 436 278 462Q284 488 291 508ZM445 1279Q543 1237 543 1107Q543 1064 521 1028Q499 993 462 972Q425 951 379 951ZM348 955Q321 961 297 980Q273 1000 258 1028Q244 1055 244 1086Q244 1111 257 1138Q270 1164 289 1180Q302 1192 315 1198Q330 1205 330 1211Q330 1214 320 1217Q282 1208 252 1183Q221 1158 204 1122Q186 1087 186 1047Q186 1004 204 964Q221 924 252 892Q284 860 324 844L295 693Q179 787 124 878Q70 968 70 1057Q70 1122 104 1178Q138 1234 197 1268Q256 1303 330 1303Q350 1303 370 1299Q391 1295 414 1289Z"/>
+          </svg>
+          <rect id="quiz-ledger" x="397" y="310" width="72" height="4" fill="#1F2A44"/>
+          <g id="quiz-note" class="quiz-note">
+            <rect id="quiz-note-stem" x="450" y="120" width="6" height="128" fill="#1F2A44"/>
+            <g id="quiz-note-head" class="quiz-note-head">
+              <ellipse id="quiz-note-ellipse" cx="433" cy="248" rx="23" ry="16" fill="#1F2A44" transform="rotate(-20 433 248)"/>
+            </g>
+          </g>
+        </svg>
+        <svg id="quiz-ear-icon" class="quiz-ear-icon" width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+          <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+          <path d="M19 5a10 10 0 0 1 0 14"/>
+        </svg>
+        <div id="quiz-question" class="quiz-question"></div>
+        <button type="button" id="btn-quiz-listen" class="quiz-listen-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+            <path d="M19 5a10 10 0 0 1 0 14"/>
+          </svg>
+          <span data-text="quiz.listen"></span>
+        </button>
+      </div>
+
+      <div class="quiz-side">
+        <div id="quiz-hint" class="quiz-hint"></div>
+        <svg id="quiz-mascot" class="quiz-mascot" width="104" height="120" viewBox="0 0 120 140" aria-hidden="true">
+          <path d="M84 22 V70" stroke="#1F2A44" stroke-width="6" stroke-linecap="round"/>
+          <path d="M84 22 C100 30 108 42 104 58" stroke="#1F2A44" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <ellipse cx="60" cy="96" rx="44" ry="36" fill="#FFC93C" stroke="#1F2A44" stroke-width="5"/>
+          <circle cx="46" cy="92" r="6" fill="#1F2A44"/>
+          <circle cx="74" cy="92" r="6" fill="#1F2A44"/>
+          <circle cx="48" cy="90" r="2" fill="#fff"/>
+          <circle cx="76" cy="90" r="2" fill="#fff"/>
+          <path d="M50 106 Q60 116 70 106" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <circle cx="34" cy="106" r="6" fill="#FF8A7A" opacity=".6"/>
+          <circle cx="86" cy="106" r="6" fill="#FF8A7A" opacity=".6"/>
+        </svg>
+      </div>
+
+      <div id="quiz-answers" class="quiz-answers"></div>
+    </section>
+
+    <!-- 5. クリア画面 -->
+    <section id="screen-clear" class="screen">
+      <!-- 飾り（紙吹雪と音符） -->
+      <div class="clear-deco" style="left: 120px; top: 90px; width: 26px; height: 12px; background: #FFC93C; border-radius: 4px; transform: rotate(25deg)"></div>
+      <div class="clear-deco" style="left: 260px; top: 180px; width: 22px; height: 10px; background: #FF8A7A; border-radius: 4px; transform: rotate(-30deg)"></div>
+      <div class="clear-deco" style="left: 180px; top: 330px; width: 16px; height: 16px; background: #8FDCEB; border-radius: 99px"></div>
+      <div class="clear-deco" style="left: 940px; top: 110px; width: 26px; height: 12px; background: #A8E395; border-radius: 4px; transform: rotate(-20deg)"></div>
+      <div class="clear-deco" style="left: 1040px; top: 240px; width: 18px; height: 18px; background: #FFC93C; border-radius: 99px"></div>
+      <div class="clear-deco" style="left: 880px; top: 350px; width: 24px; height: 11px; background: #DAB4F7; border-radius: 4px; transform: rotate(40deg)"></div>
+      <div class="clear-deco" style="left: 90px; top: 560px; width: 22px; height: 10px; background: #8FDCEB; border-radius: 4px; transform: rotate(15deg)"></div>
+      <div class="clear-deco" style="left: 1080px; top: 600px; width: 22px; height: 10px; background: #FF8A7A; border-radius: 4px; transform: rotate(-45deg)"></div>
+      <svg class="clear-deco-note" style="left: 70px; top: 200px; color: #FFE27A" viewBox="0 0 308 549" width="36" height="64" aria-hidden="true">
+        <path fill="currentColor" d="M143 0H180V49L254 143Q282 177 295 217Q308 257 308 298Q308 372 262 430H239Q267 370 267 309Q267 270 254 240Q241 209 221 190Q201 171 180 168V415Q180 475 144 512Q109 549 56 549Q28 549 14 536Q0 522 0 500Q0 474 14 453Q28 432 51 419Q74 406 99 406Q121 406 143 415Z"/>
+      </svg>
+      <svg class="clear-deco-note" style="left: 1010px; top: 420px; color: #8FDCEB" viewBox="0 0 484 587" width="59" height="72" aria-hidden="true">
+        <path fill="currentColor" d="M448 115 179 80V409Q179 466 146 504Q112 542 56 542Q0 542 0 494Q0 470 13 448Q26 427 48 414Q70 400 96 400Q121 400 143 409V0L484 45V453Q484 494 466 524Q448 555 420 571Q393 587 362 587Q306 587 306 538Q306 498 336 471Q366 444 404 444Q427 444 448 453Z"/>
+      </svg>
+
+      <div class="clear-top">
+        <div id="clear-title" class="clear-title"></div>
+        <div id="clear-stars" class="clear-stars"></div>
+        <div id="clear-result" class="clear-result"></div>
+      </div>
+
+      <div class="clear-middle">
+        <svg width="150" height="175" viewBox="0 0 120 140" aria-hidden="true">
+          <path d="M84 22 V70" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+          <path d="M84 22 C100 30 108 42 104 58" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <ellipse cx="60" cy="96" rx="44" ry="36" fill="#FFC93C" stroke="#FFFFFF" stroke-width="5"/>
+          <path d="M40 92 Q46 84 52 92" stroke="#1F2A44" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <path d="M68 92 Q74 84 80 92" stroke="#1F2A44" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <path d="M46 104 Q60 122 74 104 Z" fill="#1F2A44"/>
+          <circle cx="34" cy="106" r="6" fill="#FF8A7A" opacity=".7"/>
+          <circle cx="86" cy="106" r="6" fill="#FF8A7A" opacity=".7"/>
+        </svg>
+      </div>
+
+      <div class="clear-buttons">
+        <button type="button" id="btn-clear-retry" class="clear-retry-btn" data-text="clear.retry"></button>
+        <button type="button" id="btn-clear-next" class="clear-next-btn">
+          <span data-text="clear.next"></span>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- 案内（トースト） -->
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <!-- デバッグモードバッジ -->
+    <div id="debug-badge" class="debug-badge" hidden></div>
+  </div>
+
+  <!-- 版を変えるときは、js/config.js の version と、ここと css の ?v= の数字を必ず同じにする -->
+  <script src="js/config.js?v=0.2.4"></script>
+  <script src="js/texts.js?v=0.2.4"></script>
+  <script src="js/music.js?v=0.2.4"></script>
+  <script src="js/quiz.js?v=0.2.4"></script>
+  <script src="js/audio.js?v=0.2.4"></script>
+  <script src="js/app.js?v=0.2.4"></script>
+</body>
+</html>
+
