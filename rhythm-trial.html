@@ -43,7 +43,7 @@ h1{font-size:24px;margin:0 0 2px}
      判定の計算は js/rhythm.js の judge と同じ決まり。選んだ数値を指示書に写す -->
 <div id="stage">
 <h1>リズムの森 ためし打ち（速さと判定の幅）</h1>
-<p class="note">「やってみる」→ ピアノの「1・2・3・4」のあと、光るカードに合わせて「ドン！」。A・B・C の3つのきびしさで同時に判定します。<br>ずれのくわしい数字は、いちばん下に出ます（画面を下に動かすと見えます）。</p>
+<p class="note">「やってみる」→ ピアノの「1・2・3・4」のあと、光るカードに合わせて「ドン！」。A・B・C の3つのきびしさで同時に判定します。<br>「みのがし」＝たたかれなかった音、「よぶん」＝どの音にも当たらなかったたたき。いちばん下は調整用のくわしい数字です。</p>
 <div class="ctl" id="speeds"><b>はやさ</b></div>
 <div class="ctl" id="patterns"><b>リズム</b></div>
 <div id="cards"></div>
@@ -226,22 +226,26 @@ h1{font-size:24px;margin:0 0 2px}
     $("msg").textContent = "";
     var html = WINDOWS.map(function (w) {
       var r = judge(pat, bpm, taps, w.perfect, w.good);
-      return '<div class="box"><h2>' + w.name + "　" + Math.round(w.perfect * 1000) + "／" + Math.round(w.good * 1000) + "ミリ秒</h2><span class=\"big\">" + RESULT_TEXT[r.result] + "</span><br>ぴったり " + r.counts.pittari + "・おしい " + r.counts.oshii + "・みのがし " + r.counts.miss + "・よぶん " + r.extras + "</div>";
+      return '<div class="box"><h2>' + w.name + "　" + Math.round(w.perfect * 1000) + "／" + Math.round(w.good * 1000) + "ミリ秒</h2><span class=\"big\">" + RESULT_TEXT[r.result] + "</span><br>ぴったり" + r.counts.pittari + "・おしい" + r.counts.oshii + "・みのがし" + r.counts.miss + "／よぶん" + r.extras + "</div>";
     }).join("");
     $("res").innerHTML = html;
     var wide = judge(pat, bpm, taps, 0.3, 0.3), diffs = [];
     wide.notes.forEach(function (n) { if (n.diff !== null) diffs.push(n.diff); });
-    var line = "このときのずれ（ミリ秒。＋はおそい、−ははやい）：" + wide.notes.map(function (n) { return n.diff === null ? "×" : ms(n.diff); }).join("　");
+    // ずれは「〇おそい／〇はやい」と言葉で表す（単位はミリ秒＝1000分の1秒）
+    function word(x) { var v = Math.round(Math.abs(x) * 1000); return v === 0 ? "ぴったり 0" : (x > 0 ? v + " おそい" : v + " はやい"); }
+    var line = "<b>【調整用の表示です。本番の画面には出ません】</b>";
+    line += "<br>たたくべき音 " + wide.notes.length + "つ／たたいた回数 " + taps.length + "回";
+    line += "<br>音ごとのずれ（ミリ秒＝1000分の1秒）：" + wide.notes.map(function (n, i) { return (i + 1) + "つ目 " + (n.diff === null ? "当たりなし" : word(n.diff)); }).join("、");
     if (diffs.length) {
       var avg = diffs.reduce(function (a, b) { return a + b; }, 0) / diffs.length;
       history.push(avg); if (history.length > 10) history.shift();
       var hAvg = history.reduce(function (a, b) { return a + b; }, 0) / history.length;
-      line += "<br>このときの平均 " + ms(avg) + "／ここまで " + history.length + "回の平均 " + ms(hAvg);
+      line += "<br>平均のずれ：今回 " + word(avg) + "／ここまで " + history.length + "回の平均 " + word(hAvg);
     }
-    var lat = [];
-    if (typeof ctx.baseLatency === "number") lat.push("baseLatency " + Math.round(ctx.baseLatency * 1000));
-    if (typeof ctx.outputLatency === "number") lat.push("outputLatency " + Math.round(ctx.outputLatency * 1000));
-    line += "<br>はやさ " + bpm + "・リズム " + pat.map(function (x) { return WORD[x]; }).join(" ") + "　（端末が知らせる音の遅れ：" + (lat.length ? lat.join("・") + " ミリ秒" : "わからない") + "）";
+    var latMs = 0, known = false;
+    if (typeof ctx.baseLatency === "number") { latMs += ctx.baseLatency * 1000; known = true; }
+    if (typeof ctx.outputLatency === "number") { latMs += ctx.outputLatency * 1000; known = true; }
+    line += "<br>はやさ " + bpm + "・リズム " + pat.map(function (x) { return WORD[x]; }).join(" ") + "　（この端末が知らせる音の遅れ：" + (known ? "約 " + Math.round(latMs) + " ミリ秒" : "わからない") + "）";
     $("detail").innerHTML = line;
   }
   // たたいた時刻は、押した瞬間の音の時計（ctx.currentTime）で記録する
