@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>リズムの森 ためし打ち（速さと判定の幅）</title>
+<style>
+@font-face{font-family:'M PLUS Rounded 1c';src:url('vendor/fonts/MPLUSRounded1c-ExtraBold-subset.woff2') format('woff2');font-weight:800}
+@font-face{font-family:'M PLUS Rounded 1c';src:url('vendor/fonts/MPLUSRounded1c-Medium-subset.woff2') format('woff2');font-weight:500}
+html,body{margin:0;height:100%;background:#E2F4D8;color:#1F2A44;font-family:'M PLUS Rounded 1c',sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+*{box-sizing:border-box;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#stage{width:1194px;transform-origin:0 0;padding:16px 32px}
+h1{font-size:24px;margin:0 0 2px}
+.note{font-size:15px;font-weight:500;margin:0 0 8px;line-height:1.45}
+.ctl{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:nowrap}
+.ctl b{font-size:18px;width:72px;flex:none}
+.chip{height:46px;padding:0 14px;flex:none;border-radius:999px;border:4px solid #1F2A44;background:#fff;font:800 17px 'M PLUS Rounded 1c',sans-serif;color:#1F2A44;cursor:pointer;opacity:.6}
+.chip.on{background:#A8DE97;opacity:1}
+#cards{display:flex;gap:24px;justify-content:center;height:254px;align-items:flex-end}
+.card{width:220px;height:240px;border-radius:28px;border:5px solid #1F2A44;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.card.wide{width:464px}
+.card.now{border-width:8px;background:#FFE27A;transform:translateY(-14px)}
+.card span{font-size:30px;font-weight:800}
+.card svg{display:block}
+#play{display:flex;justify-content:center;align-items:center;gap:56px;margin-top:4px}
+.pill{height:80px;padding:0 28px;border-radius:999px;border:4px solid #1F2A44;background:#fff;font:800 22px 'M PLUS Rounded 1c',sans-serif;color:#1F2A44;cursor:pointer}
+.pill.main{background:#FFC93C}
+.pill:active,.chip:active{transform:scale(.95)}
+#don{width:230px;height:230px;border-radius:999px;border:8px solid #1F2A44;background:#F28C5B;font:800 52px 'M PLUS Rounded 1c',sans-serif;color:#1F2A44;box-shadow:0 12px 0 #1F2A44;cursor:pointer}
+#don.press{transform:translateY(6px) scale(.95);box-shadow:0 6px 0 #1F2A44}
+#mid{height:96px;margin-top:6px;position:relative}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:800}
+#res{display:flex;gap:16px;height:96px}
+.box{flex:1 1 0;min-width:0;background:#fff;border:4px solid #1F2A44;border-radius:20px;padding:6px 14px;font-size:15px;font-weight:500;line-height:1.35}
+.box h2{font-size:15px;margin:0;white-space:nowrap}
+.box .big{font-size:26px;font-weight:800}
+#detail{margin-top:22px;background:#fff;border:4px solid #1F2A44;border-radius:24px;padding:10px 16px;font-size:16px;font-weight:500;line-height:1.6}
+</style>
+</head>
+<body>
+<!-- リズムの森の「速さ」と「判定の幅」を、実機でたたいて決めるための見本（Claude 作成 2026-11-06）。アプリ本体ではない。
+     音（たいこ・ピアノ風の音）、マスター音量 0.6、「ドン！」ボタン・カードの大きさは本番（js/audio.js・music.js、design_tokens.md）と同じ。
+     判定の計算は js/rhythm.js の judge と同じ決まり。選んだ数値を指示書に写す -->
+<div id="stage">
+<h1>リズムの森 ためし打ち（速さと判定の幅）</h1>
+<p class="note">「やってみる」→ ピアノの「1・2・3・4」のあと、光るカードに合わせて「ドン！」。A・B・C の3つのきびしさで同時に判定します。<br>ずれのくわしい数字は、いちばん下に出ます（画面を下に動かすと見えます）。</p>
+<div class="ctl" id="speeds"><b>はやさ</b></div>
+<div class="ctl" id="patterns"><b>リズム</b></div>
+<div id="cards"></div>
+<div id="mid"><div id="res"></div><div id="msg"></div></div>
+<div id="play">
+  <button class="pill" id="model">おてほん</button>
+  <button id="don">ドン！</button>
+  <button class="pill main" id="try">やってみる</button>
+</div>
+<div id="detail">まだ たたいていません</div>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  // ===== 字形（Noto Music から書き出し。symbols.md と同じ形） =====
+  var GLYPH = {
+    ta: { vb: "0 0 180 549", h: 64, d: "M143 0H180V415Q180 475 144 512Q109 549 56 549Q28 549 14 536Q0 522 0 500Q0 474 14 453Q28 432 51 419Q74 406 99 406Q121 406 143 415Z" },
+    titi: { vb: "0 0 484 587", h: 68, d: "M448 115 179 80V409Q179 466 146 504Q112 542 56 542Q0 542 0 494Q0 470 13 448Q26 427 48 414Q70 400 96 400Q121 400 143 409V0L484 45V453Q484 494 466 524Q448 555 420 571Q393 587 362 587Q306 587 306 538Q306 498 336 471Q366 444 404 444Q427 444 448 453Z" },
+    un: { vb: "0 0 256 755", h: 64, d: "M96 0 256 195Q206 254 179 297Q152 340 152 384Q152 421 176 461.5Q200 502 252 564L236 586Q192 558 154 558Q126 558 112 576.5Q98 595 98 621Q98 653 111.5 681.5Q125 710 148 736L135 755Q66 705 33 664Q0 623 0 575Q0 532 27 512Q54 492 92 492Q122 492 170 515V513L16 308Q117 219 117 142Q117 81 53 0Z" },
+    taan: { vb: "0 0 297 1010", h: 72, d: "M273 0H297V840Q297 872 280.5 902.5Q264 933 236 957Q208 981 175 995.5Q142 1010 109 1010Q61 1010 30.5 987.5Q0 965 0 919Q0 868 28.5 827.5Q57 787 103 763.5Q149 740 201 740Q245 740 273 762ZM27 943Q27 953 34.5 961Q42 969 55 969Q90 969 142 940Q177 920 205.5 895.5Q234 871 251 846.5Q268 822 268 805Q268 794 262.5 786.5Q257 779 243 779Q224 779 197 791Q170 803 140.5 822Q111 841 85 863.5Q59 886 43 907Q27 928 27 943Z" }
+  };
+  var WORD = { ta: "タン", titi: "タタ", un: "ウン", taan: "ターアン" };
+
+  // ===== 判定（js/rhythm.js と同じ決まり） =====
+  var CARDS = { ta: { beats: 1, hits: [0] }, titi: { beats: 1, hits: [0, 0.5] }, un: { beats: 1, hits: [] }, taan: { beats: 2, hits: [0] } };
+  var EPS = 1e-9;
+  function expectedTimes(p, bpm) {
+    var sec = 60 / bpm, t = [], b = 0;
+    for (var i = 0; i < p.length; i++) { var c = CARDS[p[i]]; for (var j = 0; j < c.hits.length; j++) t.push((b + c.hits[j]) * sec); b += c.beats; }
+    return t;
+  }
+  function cardStarts(p, bpm) {
+    var sec = 60 / bpm, t = [], b = 0;
+    for (var i = 0; i < p.length; i++) { t.push(b * sec); b += CARDS[p[i]].beats; }
+    return t;
+  }
+  function judge(p, bpm, taps, perfect, good) {
+    var e = expectedTimes(p, bpm), ts = taps.slice().sort(function (a, b) { return a - b; });
+    var asg = e.map(function () { return []; });
+    ts.forEach(function (t) {
+      var k = 0;
+      for (var m = 1; m < e.length; m++) if (Math.abs(t - e[m]) < Math.abs(t - e[k]) - EPS) k = m;
+      asg[k].push(t);
+    });
+    var notes = [], cnt = { pittari: 0, oshii: 0, miss: 0 };
+    e.forEach(function (et, i) {
+      var hit = null, hd = Infinity;
+      asg[i].forEach(function (c) { var d = Math.abs(c - et); if (d <= good + EPS && d < hd - EPS) { hit = c; hd = d; } });
+      if (hit !== null) { var g = hd <= perfect + EPS ? "pittari" : "oshii"; cnt[g]++; notes.push({ time: et, tap: hit, diff: hit - et, grade: g }); }
+      else { cnt.miss++; notes.push({ time: et, tap: null, diff: null, grade: "miss" }); }
+    });
+    var hitN = cnt.pittari + cnt.oshii, ex = ts.length - hitN, r;
+    if (cnt.miss === 0 && ex === 0 && cnt.oshii <= 1) r = "pittari";
+    else if (hitN * 10 >= e.length * 6 && ex <= 1) r = "oshii";
+    else r = "retry";
+    return { result: r, notes: notes, counts: cnt, extras: ex };
+  }
+
+  // ===== 候補 =====
+  var SPEEDS = [50, 60, 70, 80, 90, 100, 110, 120];
+  var PATTERNS = [
+    ["ta", "ta", "titi", "ta"],
+    ["ta", "un", "ta", "ta"],
+    ["titi", "titi", "ta", "un"],
+    ["taan", "titi", "ta"],
+    ["titi", "titi", "titi", "titi"]
+  ];
+  var WINDOWS = [
+    { id: "A", name: "A きびしい", perfect: 0.07, good: 0.14 },
+    { id: "B", name: "B ふつう", perfect: 0.10, good: 0.20 },
+    { id: "C", name: "C やさしい", perfect: 0.15, good: 0.30 }
+  ];
+  var RESULT_TEXT = { pittari: "ぴったり！", oshii: "おしい", retry: "もういちど" };
+  var bpm = 60, pat = PATTERNS[0];
+
+  // ===== 音（js/audio.js・music.js と同じ合成） =====
+  var ctx = null, master = null, noise = null;
+  var DRUM = {
+    body: { type: "sine", f0: 260, f1: 110, sweep: 0.18, gain: 1.0, decay: 0.45, attack: 0.002 },
+    over: { type: "triangle", ratio: 2.0, gain: 0.3, decay: 0.2 },
+    hit: { freq: 1800, q: 0.8, gain: 0.3, decay: 0.035 }
+  };
+  function ensure() {
+    try {
+      if (ctx && ctx.state === "closed") ctx = null;
+      if (!ctx) {
+        var C = window.AudioContext || window.webkitAudioContext;
+        if (!C) return null;
+        ctx = new C(); master = ctx.createGain(); master.gain.value = 0.6; master.connect(ctx.destination);
+        var sr = ctx.sampleRate || 44100; noise = ctx.createBuffer(1, Math.floor(sr * 0.1), sr);
+        var d = noise.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      }
+      if (ctx.state !== "running") { var p = ctx.resume(); if (p && p.catch) p.catch(function () {}); }
+      return ctx;
+    } catch (e) { return null; }
+  }
+  function tone(t, type, f0, f1, sweep, gain, decay, attack) {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + sweep);
+    if (attack > 0) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + attack); } else g.gain.setValueAtTime(gain, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + decay);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + decay + 0.02);
+  }
+  function drumAt(t) {
+    var b = DRUM.body;
+    tone(t, b.type, b.f0, b.f1, b.sweep, b.gain, b.decay, b.attack);
+    tone(t, DRUM.over.type, b.f0 * DRUM.over.ratio, b.f1 * DRUM.over.ratio, b.sweep, DRUM.over.gain, DRUM.over.decay, b.attack);
+    var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noise; f.type = "bandpass"; f.frequency.value = DRUM.hit.freq; f.Q.value = DRUM.hit.q;
+    g.gain.setValueAtTime(DRUM.hit.gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + DRUM.hit.decay);
+    s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + DRUM.hit.decay + 0.02);
+  }
+  function pianoAt(freq, t, dur) {
+    var end = t + dur + 0.6, env = ctx.createGain();
+    env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(0.5, t + 0.005); env.gain.exponentialRampToValueAtTime(0.001, end); env.connect(master);
+    [[ "triangle", 1, 1.0 ], [ "sine", 2, 0.25 ]].forEach(function (a) {
+      var o = ctx.createOscillator(), g = ctx.createGain(); o.type = a[0]; o.frequency.setValueAtTime(freq * a[1], t); g.gain.setValueAtTime(a[2], t);
+      o.connect(g); g.connect(env); o.start(t); o.stop(end);
+    });
+  }
+
+  // ===== 画面 =====
+  var $ = function (id) { return document.getElementById(id); };
+  function glyph(id) {
+    var g = GLYPH[id], vb = g.vb.split(" "), w = Math.round(g.h * vb[2] / vb[3]);
+    return '<svg viewBox="' + g.vb + '" width="' + w + '" height="' + g.h + '" aria-hidden="true"><path fill="#1F2A44" d="' + g.d + '"/></svg>';
+  }
+  function drawCards() {
+    $("cards").innerHTML = pat.map(function (id, i) {
+      return '<div class="card' + (id === "taan" ? " wide" : "") + '" id="c' + i + '">' + glyph(id) + "<span>" + WORD[id] + "</span></div>";
+    }).join("");
+  }
+  function chips() {
+    $("speeds").innerHTML = "<b>はやさ</b>" + SPEEDS.map(function (s) { return '<button class="chip' + (s === bpm ? " on" : "") + '" data-s="' + s + '">' + s + "</button>"; }).join("") + '<span style="font-size:16px;font-weight:500">（1分間の拍の数）</span>';
+    $("patterns").innerHTML = "<b>リズム</b>" + PATTERNS.map(function (p, i) { return '<button class="chip' + (p === pat ? " on" : "") + '" data-p="' + i + '">' + p.map(function (x) { return WORD[x]; }).join(" ") + "</button>"; }).join("");
+  }
+  document.addEventListener("click", function (ev) {
+    var t = ev.target;
+    if (busy) return;
+    if (t.dataset && t.dataset.s) { bpm = +t.dataset.s; chips(); }
+    if (t.dataset && t.dataset.p) { pat = PATTERNS[+t.dataset.p]; chips(); drawCards(); }
+  });
+
+  // ===== お手本・ためし打ち =====
+  var busy = false, mode = null, t0 = 0, taps = [], history = [];
+  function light(now) {
+    var st = cardStarts(pat, bpm), sec = 60 / bpm, rel = now - t0, idx = -1;
+    if (rel >= 0 && rel < 4 * sec) for (var i = 0; i < st.length; i++) if (rel >= st[i]) idx = i;
+    for (var k = 0; k < pat.length; k++) $("c" + k).classList.toggle("now", k === idx);
+  }
+  function loop() {
+    if (!busy) return;
+    var now = ctx.currentTime, sec = 60 / bpm;
+    light(now);
+    if (mode === "try") {
+      var c = Math.floor((now - (t0 - 4 * sec)) / sec);
+      $("msg").textContent = now < t0 ? ["1", "2", "3", "4"][Math.max(0, Math.min(3, c))] : "たたいて！";
+    }
+    if (now > t0 + 4 * sec + 0.4) { finish(); return; }
+    requestAnimationFrame(loop);
+  }
+  function start(m) {
+    if (busy || !ensure()) return;
+    busy = true; mode = m; taps = []; $("res").innerHTML = "";
+    var sec = 60 / bpm, base = ctx.currentTime + 0.3;
+    if (m === "model") {
+      t0 = base; $("msg").textContent = "おてほん";
+      expectedTimes(pat, bpm).forEach(function (t) { drumAt(t0 + t); });
+    } else {
+      t0 = base + 4 * sec;
+      for (var i = 0; i < 4; i++) pianoAt(i === 0 ? 1046.5 : 523.25, base + i * sec, 0.1);
+    }
+    requestAnimationFrame(loop);
+  }
+  function ms(x) { return (x >= 0 ? "+" : "−") + Math.round(Math.abs(x) * 1000); }
+  function finish() {
+    busy = false; light(-1);
+    if (mode !== "try") { $("msg").textContent = ""; return; }
+    $("msg").textContent = "";
+    var html = WINDOWS.map(function (w) {
+      var r = judge(pat, bpm, taps, w.perfect, w.good);
+      return '<div class="box"><h2>' + w.name + "　" + Math.round(w.perfect * 1000) + "／" + Math.round(w.good * 1000) + "ミリ秒</h2><span class=\"big\">" + RESULT_TEXT[r.result] + "</span><br>ぴったり " + r.counts.pittari + "・おしい " + r.counts.oshii + "・みのがし " + r.counts.miss + "・よぶん " + r.extras + "</div>";
+    }).join("");
+    $("res").innerHTML = html;
+    var wide = judge(pat, bpm, taps, 0.3, 0.3), diffs = [];
+    wide.notes.forEach(function (n) { if (n.diff !== null) diffs.push(n.diff); });
+    var line = "このときのずれ（ミリ秒。＋はおそい、−ははやい）：" + wide.notes.map(function (n) { return n.diff === null ? "×" : ms(n.diff); }).join("　");
+    if (diffs.length) {
+      var avg = diffs.reduce(function (a, b) { return a + b; }, 0) / diffs.length;
+      history.push(avg); if (history.length > 10) history.shift();
+      var hAvg = history.reduce(function (a, b) { return a + b; }, 0) / history.length;
+      line += "<br>このときの平均 " + ms(avg) + "／ここまで " + history.length + "回の平均 " + ms(hAvg);
+    }
+    var lat = [];
+    if (typeof ctx.baseLatency === "number") lat.push("baseLatency " + Math.round(ctx.baseLatency * 1000));
+    if (typeof ctx.outputLatency === "number") lat.push("outputLatency " + Math.round(ctx.outputLatency * 1000));
+    line += "<br>はやさ " + bpm + "・リズム " + pat.map(function (x) { return WORD[x]; }).join(" ") + "　（端末が知らせる音の遅れ：" + (lat.length ? lat.join("・") + " ミリ秒" : "わからない") + "）";
+    $("detail").innerHTML = line;
+  }
+  // たたいた時刻は、押した瞬間の音の時計（ctx.currentTime）で記録する
+  $("don").addEventListener("pointerdown", function (ev) {
+    ev.preventDefault();
+    var c = ensure(); if (!c) return;
+    $("don").classList.add("press");
+    drumAt(c.currentTime);
+    if (busy && mode === "try") {
+      var rel = c.currentTime - t0;
+      if (rel >= -30 / bpm) taps.push(rel);
+    }
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(function (e) { $("don").addEventListener(e, function () { $("don").classList.remove("press"); }); });
+  $("model").addEventListener("click", function () { start("model"); });
+  $("try").addEventListener("click", function () { start("try"); });
+
+  // 画面の幅に合わせて縮小する（本番と同じ考え方）
+  function fit() { var s = Math.min(1, window.innerWidth / 1194); $("stage").style.transform = "scale(" + s + ")"; }
+  window.addEventListener("resize", fit);
+  chips(); drawCards(); fit();
+
+  // 確認用（Claude の自動確認で使う）
+  window.__sample = { judge: judge, get taps() { return taps; }, get t0() { return t0; }, get ctx() { return ctx; } };
+})();
+</script>
+</body>
+</html>
