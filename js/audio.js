@@ -142,6 +142,30 @@ window.ONPU = window.ONPU || {};
     }
   }
 
+  // ピアノ風の1音を指定した時刻に予約する（duration を省いたときは 0.1秒）
+  function playNoteAt(name, when, duration) {
+    if (!ONPU.music || typeof ONPU.music.noteToFrequency !== "function") {
+      return;
+    }
+    var freq = ONPU.music.noteToFrequency(name);
+    if (freq === null) {
+      return;
+    }
+    var dur = (typeof duration === "number" && isFinite(duration) && duration > 0) ? duration : 0.1;
+    var ctx = ensureContext(false);
+    if (!ctx) {
+      return;
+    }
+    try {
+      var startTime = (typeof when === "number" && isFinite(when))
+        ? Math.max(when, ctx.currentTime)
+        : ctx.currentTime;
+      schedulePianoNote(ctx, freq, startTime, dur);
+    } catch (e) {
+      // 音の再生に失敗しても画面は止めない
+    }
+  }
+
   // たいこの1つの層（発振器）を鳴らす
   function scheduleDrumTone(ctx, t, type, f0, f1, sweep, gain, decay, attack) {
     var osc = ctx.createOscillator();
@@ -163,7 +187,7 @@ window.ONPU = window.ONPU || {};
   }
 
   // 太鼓の音を鳴らす（胴の音・倍音・バチの音の3層）
-  function playDrum() {
+  function playDrum(when) {
     if (!ONPU.music || !ONPU.music.DRUM || !ONPU.music.DRUM.body) {
       return;
     }
@@ -174,7 +198,9 @@ window.ONPU = window.ONPU || {};
     try {
       var drum = ONPU.music.DRUM;
       var b = drum.body;
-      var t = ctx.currentTime;
+      var t = (typeof when === "number" && isFinite(when))
+        ? Math.max(when, ctx.currentTime)
+        : ctx.currentTime;
 
       // 胴の音
       scheduleDrumTone(ctx, t, b.type, b.f0, b.f1, b.sweep, b.gain, b.decay, b.attack);
@@ -267,13 +293,47 @@ window.ONPU = window.ONPU || {};
     }
   }
 
+  // 音の時計の今の時刻（秒）を返す。音が使えないときは null
+  function now() {
+    var ctx = ensureContext(false);
+    if (!ctx) {
+      return null;
+    }
+    try {
+      return typeof ctx.currentTime === "number" ? ctx.currentTime : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // 端末が知らせる音の遅れを返す。AudioContext がまだないときは null
+  function getLatency() {
+    if (!audioCtx || audioUnavailable) {
+      return null;
+    }
+    try {
+      if (audioCtx.state === "closed") {
+        return null;
+      }
+      return {
+        base: audioCtx.baseLatency,
+        output: audioCtx.outputLatency
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
   ONPU.audio = {
     unlock: unlock,
     resumeIfNeeded: resumeIfNeeded,
     playNote: playNote,
+    playNoteAt: playNoteAt,
     playDrum: playDrum,
     playMelody: playMelody,
-    playSequence: playSequence
+    playSequence: playSequence,
+    now: now,
+    getLatency: getLatency
   };
 
   // 画面にもどったとき・表示し直されたとき・触れたときに、止まっていれば再開する

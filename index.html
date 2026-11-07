@@ -4,9 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title></title>
-  <link rel="stylesheet" href="css/style.css?v=0.2.7">
+  <link rel="stylesheet" href="css/style.css?v=0.3.3">
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+    <symbol id="glyph-ta" viewBox="0 0 180 549">
+      <path fill="currentColor" d="M143 0H180V415Q180 475 144 512Q109 549 56 549Q28 549 14 536Q0 522 0 500Q0 474 14 453Q28 432 51 419Q74 406 99 406Q121 406 143 415Z"/>
+    </symbol>
+    <symbol id="glyph-titi" viewBox="0 0 484 587">
+      <path fill="currentColor" d="M448 115 179 80V409Q179 466 146 504Q112 542 56 542Q0 542 0 494Q0 470 13 448Q26 427 48 414Q70 400 96 400Q121 400 143 409V0L484 45V453Q484 494 466 524Q448 555 420 571Q393 587 362 587Q306 587 306 538Q306 498 336 471Q366 444 404 444Q427 444 448 453Z"/>
+    </symbol>
+    <symbol id="glyph-un" viewBox="0 0 256 755">
+      <path fill="currentColor" d="M96 0 256 195Q206 254 179 297Q152 340 152 384Q152 421 176 461.5Q200 502 252 564L236 586Q192 558 154 558Q126 558 112 576.5Q98 595 98 621Q98 653 111.5 681.5Q125 710 148 736L135 755Q66 705 33 664Q0 623 0 575Q0 532 27 512Q54 492 92 492Q122 492 170 515V513L16 308Q117 219 117 142Q117 81 53 0Z"/>
+    </symbol>
+    <symbol id="glyph-taan" viewBox="0 0 297 1010">
+      <path fill="currentColor" d="M273 0H297V840Q297 872 280.5 902.5Q264 933 236 957Q208 981 175 995.5Q142 1010 109 1010Q61 1010 30.5 987.5Q0 965 0 919Q0 868 28.5 827.5Q57 787 103 763.5Q149 740 201 740Q245 740 273 762ZM27 943Q27 953 34.5 961Q42 969 55 969Q90 969 142 940Q177 920 205.5 895.5Q234 871 251 846.5Q268 822 268 805Q268 794 262.5 786.5Q257 779 243 779Q224 779 197 791Q170 803 140.5 822Q111 841 85 863.5Q59 886 43 907Q27 928 27 943Z"/>
+    </symbol>
+  </svg>
   <div id="stage">
     <!-- 1. はじめる画面 -->
     <section id="screen-start" class="screen active">
@@ -175,9 +189,9 @@
           </svg>
           <span data-text="common.toMap"></span>
         </button>
-        <h2 class="quiz-title level-title" data-text="map.island.doremi"></h2>
+        <h2 id="level-title" class="quiz-title level-title" data-text="map.island.doremi"></h2>
       </div>
-      <div class="level-tabs">
+      <div id="level-tabs" class="level-tabs">
         <button type="button" id="btn-clef-treble" class="level-tab on" aria-pressed="true">
           <svg width="18.3" height="52" viewBox="0 0 611 1732" aria-hidden="true"><path fill="#1F2A44" d="M264 533Q250 480 241 428Q232 376 232 322Q232 275 238 234Q245 192 257 157Q270 117 291 82Q312 46 336 23Q359 0 377 0Q401 0 443 85Q464 128 474 178Q484 228 484 285Q484 356 465 426Q446 497 410 559Q373 621 322 668L357 836Q372 834 382 833Q392 832 397 832Q458 832 506 866Q554 901 582 957Q611 1013 611 1080Q611 1157 572 1218Q532 1280 453 1309Q458 1326 482 1451Q488 1481 491 1498Q494 1516 495 1529Q496 1542 496 1559Q496 1609 472 1648Q447 1688 406 1710Q364 1732 313 1732Q261 1732 221 1712Q181 1693 158 1658Q135 1624 135 1579Q135 1531 162 1499Q188 1467 237 1467Q279 1467 306 1498Q332 1528 332 1570Q332 1606 307 1633Q282 1660 242 1660H232Q258 1699 314 1699Q383 1699 422 1654Q461 1609 461 1539Q461 1522 457 1494Q453 1465 443 1425Q433 1385 428 1359Q422 1333 420 1322Q386 1332 340 1332Q254 1332 172 1282Q92 1232 46 1150Q0 1068 0 973Q0 883 41 804Q82 725 142 659Q203 593 264 533ZM291 508Q314 496 340 464Q366 431 390 389Q414 347 429 304Q444 262 444 228Q444 192 433 171Q422 150 395 150Q371 150 348 172Q326 194 308 230Q291 267 281 312Q271 357 271 404Q271 436 278 462Q284 488 291 508ZM445 1279Q543 1237 543 1107Q543 1064 521 1028Q499 993 462 972Q425 951 379 951ZM348 955Q321 961 297 980Q273 1000 258 1028Q244 1055 244 1086Q244 1111 257 1138Q270 1164 289 1180Q302 1192 315 1198Q330 1205 330 1211Q330 1214 320 1217Q282 1208 252 1183Q221 1158 204 1122Q186 1087 186 1047Q186 1004 204 964Q221 924 252 892Q284 860 324 844L295 693Q179 787 124 878Q70 968 70 1057Q70 1122 104 1178Q138 1234 197 1268Q256 1303 330 1303Q350 1303 370 1299Q391 1295 414 1289Z"/></svg>
           <span data-text="level.tab.treble"></span>
@@ -261,7 +275,53 @@
       <div id="quiz-answers" class="quiz-answers"></div>
     </section>
 
-    <!-- 5. クリア画面 -->
+    <!-- 6. リズムの森の画面 -->
+    <section id="screen-rhythm" class="screen">
+      <div class="quiz-header">
+        <button type="button" id="btn-rhythm-map" class="quiz-map-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+          <span data-text="common.toMap"></span>
+        </button>
+        <h2 id="rhythm-title" class="quiz-title" data-text="rhythm.title"></h2>
+        <div class="rhythm-right">
+          <div class="quiz-progress">
+            <div id="rhythm-progress-dots" class="quiz-dots"></div>
+            <span id="rhythm-progress-text" class="quiz-progress-text"></span>
+          </div>
+          <button type="button" id="btn-rhythm-speed" class="rhythm-speed-btn"></button>
+        </div>
+      </div>
+
+      <p id="rhythm-lead" class="rhythm-lead" data-text="rhythm.lead"></p>
+
+      <div id="rhythm-cards" class="rhythm-cards"></div>
+      <div id="rhythm-dots" class="rhythm-dots"></div>
+
+      <div class="rhythm-controls">
+        <button type="button" id="btn-rhythm-model" class="rhythm-model-btn">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+          </svg>
+          <span data-text="rhythm.model"></span>
+        </button>
+        <div class="rhythm-don-wrap">
+          <button type="button" id="btn-rhythm-don" class="rhythm-don-btn" data-text="rhythm.don"></button>
+          <div id="rhythm-bubble" class="rhythm-bubble" hidden></div>
+        </div>
+        <button type="button" id="btn-rhythm-retry" class="rhythm-flow-btn" data-text="rhythm.btn.retry" hidden></button>
+        <button type="button" id="btn-rhythm-next" class="rhythm-flow-btn" hidden>
+          <span data-text="rhythm.btn.next"></span>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F2A44" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- 7. クリア画面 -->
     <section id="screen-clear" class="screen">
       <!-- 飾り（紙吹雪と音符） -->
       <div class="clear-deco" style="left: 120px; top: 90px; width: 26px; height: 12px; background: #FFC93C; border-radius: 4px; transform: rotate(25deg)"></div>
@@ -283,6 +343,12 @@
         <div id="clear-title" class="clear-title"></div>
         <div id="clear-stars" class="clear-stars"></div>
         <div id="clear-result" class="clear-result"></div>
+        <div id="clear-score" class="clear-score">
+          <span class="clear-score-total" data-text="rhythm.clear.total"></span>
+          <span id="clear-score-num" class="clear-score-num"></span>
+          <span class="clear-score-unit" data-text="rhythm.clear.unit"></span>
+        </div>
+        <div id="clear-qdots" class="clear-qdots"></div>
       </div>
 
       <div class="clear-middle">
@@ -317,12 +383,13 @@
   </div>
 
   <!-- 版を変えるときは、js/config.js の version と、ここと css の ?v= の数字を必ず同じにする -->
-  <script src="js/config.js?v=0.2.7"></script>
-  <script src="js/texts.js?v=0.2.7"></script>
-  <script src="js/music.js?v=0.2.7"></script>
-  <script src="js/quiz.js?v=0.2.7"></script>
-  <script src="js/audio.js?v=0.2.7"></script>
-  <script src="js/app.js?v=0.2.7"></script>
+  <script src="js/config.js?v=0.3.3"></script>
+  <script src="js/texts.js?v=0.3.3"></script>
+  <script src="js/music.js?v=0.3.3"></script>
+  <script src="js/quiz.js?v=0.3.3"></script>
+  <script src="js/rhythm.js?v=0.3.3"></script>
+  <script src="js/audio.js?v=0.3.3"></script>
+  <script src="js/app.js?v=0.3.3"></script>
 </body>
 </html>
 

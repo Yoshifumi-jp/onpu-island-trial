@@ -41,6 +41,11 @@
   --note-so: #8FDCEB;
   --note-la: #AFC2FF;
   --note-ti: #DAB4F7;
+
+  /* リズムの森の画面の色 */
+  --rhythm-active: #FFE27A;
+  --rhythm-don: #F28C5B;
+  --rhythm-miss: #B8C2CC;
 }
 
 /* 全体・タブレット向け設定 */
@@ -849,7 +854,268 @@ button:active {
   animation: quiz-answer-blink .6s steps(1, end) 2;
 }
 
-/* 6. クリア画面 */
+/* 6. リズムの森の画面 */
+#screen-rhythm {
+  background-color: var(--rhythm-bg);
+}
+
+.rhythm-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.rhythm-speed-btn {
+  min-height: 44px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 4px solid var(--ink);
+  background: var(--white);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rhythm-lead {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 112px;
+  margin: 0;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.rhythm-lead.count {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.rhythm-cards {
+  position: absolute;
+  left: 121px;
+  top: 176px;
+  width: 952px;
+  display: flex;
+  gap: 24px;
+}
+
+.rhythm-card {
+  width: 220px;
+  height: 240px;
+  border-radius: 28px;
+  border: 5px solid var(--ink);
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--ink);
+  transition: transform .08s, background-color .08s, border-width .08s;
+}
+
+.rhythm-card.wide {
+  width: 464px;
+}
+
+.rhythm-card.active {
+  transform: translateY(-14px);
+  border-width: 8px;
+  background: var(--rhythm-active);
+}
+
+.rhythm-card svg {
+  display: block;
+  height: 104px;
+  color: var(--ink);
+}
+
+.rhythm-card-label {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.rhythm-dots {
+  position: absolute;
+  left: 121px;
+  top: 440px;
+  width: 952px;
+  display: flex;
+  gap: 24px;
+}
+
+.rhythm-dot-col {
+  width: 220px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+}
+
+.rhythm-dot-col.wide {
+  width: 464px;
+}
+
+.rhythm-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 99px;
+  background: transparent;
+  border: 4px solid var(--ok);
+}
+
+.rhythm-dot.model {
+  width: 22px;
+  height: 22px;
+  background: var(--ok);
+  border: 4px solid var(--ok);
+}
+
+.rhythm-dot.pittari {
+  width: 34px;
+  height: 34px;
+  background: var(--ok);
+  border: 4px solid var(--ok);
+}
+
+.rhythm-dot.oshii {
+  width: 26px;
+  height: 26px;
+  background: var(--star);
+  border: 3px solid var(--ink);
+}
+
+.rhythm-dot.miss {
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: 3px solid var(--rhythm-miss);
+}
+
+@keyframes rhythm-dot-pop {
+  0% { transform: scale(1.6); }
+  100% { transform: scale(1); }
+}
+
+.rhythm-dot.pop {
+  animation: rhythm-dot-pop .35s ease-out;
+}
+
+.rhythm-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 510px;
+  height: 230px;
+}
+
+.rhythm-model-btn {
+  position: absolute;
+  right: 768px;
+  top: 75px;
+  height: 80px;
+  padding: 0 28px;
+  border-radius: 999px;
+  border: 4px solid var(--ink);
+  background: var(--white);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rhythm-don-wrap {
+  position: absolute;
+  left: 482px;
+  top: 0;
+  width: 230px;
+  height: 230px;
+}
+
+.rhythm-don-btn {
+  width: 230px;
+  height: 230px;
+  border-radius: 999px;
+  border: 8px solid var(--ink);
+  background: var(--rhythm-don);
+  font-size: 52px;
+  font-weight: 800;
+  color: var(--ink);
+  box-shadow: 0 12px 0 var(--ink);
+  transition: transform .06s, box-shadow .06s;
+}
+
+.rhythm-don-btn:active,
+.rhythm-don-btn.pressed {
+  transform: translateY(8px);
+  box-shadow: 0 4px 0 var(--ink);
+}
+
+.rhythm-bubble {
+  position: absolute;
+  right: -150px;
+  top: -10px;
+  background: var(--white);
+  border: 4px solid var(--ink);
+  border-radius: 24px;
+  padding: 10px 18px;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  transform: rotate(6deg);
+}
+
+@keyframes rhythm-bubble-pop {
+  0% { transform: rotate(6deg) scale(.6); }
+  60% { transform: rotate(6deg) scale(1.15); }
+  100% { transform: rotate(6deg) scale(1); }
+}
+
+.rhythm-bubble.pop {
+  animation: rhythm-bubble-pop .4s ease-out;
+}
+
+.rhythm-flow-btn {
+  position: absolute;
+  left: 768px;
+  top: 70px;
+  height: 80px;
+  padding: 0 32px;
+  border-radius: 999px;
+  border: 4px solid var(--ink);
+  background: var(--star);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.rhythm-flow-btn.sub {
+  top: 170px;
+  background: var(--white);
+}
+
+.rhythm-flow-btn[hidden] {
+  display: none;
+}
+
+/* 7. クリア画面 */
 #screen-clear {
   background-color: var(--clear-bg);
   color: var(--white);
@@ -891,6 +1157,83 @@ button:active {
   font-weight: 800;
   margin-top: 8px;
   color: var(--white);
+}
+
+#screen-clear .clear-score,
+#screen-clear .clear-qdots {
+  display: none;
+}
+
+#screen-clear.rhythm #clear-result {
+  display: none;
+}
+
+#screen-clear.rhythm .clear-score {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.clear-score-total {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.clear-score-num {
+  font-size: 88px;
+  font-weight: 800;
+  color: #FFE27A;
+  line-height: 1;
+}
+
+.clear-score-unit {
+  font-size: 40px;
+  font-weight: 800;
+  color: #FFE27A;
+}
+
+#screen-clear.rhythm .clear-qdots {
+  display: flex;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.clear-qdot {
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+.clear-qdot.pittari {
+  background: var(--star);
+}
+
+.clear-qdot.oshii {
+  background: #8FDCEB;
+}
+
+.clear-qdot.retry {
+  background: #6B7A90;
+}
+
+.clear-qdot-num {
+  font-size: 16px;
+}
+
+.clear-qdot-pt {
+  font-size: 30px;
+}
+
+#screen-clear.rhythm .clear-middle {
+  top: 470px;
 }
 
 .clear-middle {
@@ -986,8 +1329,15 @@ button:active {
   .screen,
   .screen.active,
   .toast,
-  .toast.visible {
+  .toast.visible,
+  .rhythm-card,
+  .rhythm-don-btn {
     transition: none;
+  }
+
+  .rhythm-dot.pop,
+  .rhythm-bubble.pop {
+    animation: none;
   }
 }
 

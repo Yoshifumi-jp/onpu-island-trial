@@ -18,6 +18,39 @@ window.ONPU = window.ONPU || {};
   var lastCorrectKey = null; // 前に鳴らした正解のメロディの名前
   var currentClef = "treble"; // レベルを選ぶ画面で今選んでいる記号（"treble"／"bass"）
 
+  var RHYTHM_SPEED_ORDER = ["slow", "normal", "fast"];
+  var RHYTHM_GLYPH_WIDTH = {
+    ta: 34,
+    titi: 86,
+    un: 35,
+    taan: 31
+  };
+
+  var rhythmSpeedKey = "slow";
+  var rhythmLevel = null;
+  var rhythmQuestions = [];
+  var rhythmQIndex = 0;
+  var rhythmAttempt = 1;
+  var rhythmResults = [];
+  var rhythmLastResult = null;
+  var rhythmFlowTimerId = null;
+  var clearKind = "doremi";
+  var rhythmState = "waiting";
+  var rhythmRafId = null;
+  var rhythmAutoTimerId = null;
+  var rhythmDotTimers = [];
+  var rhythmCardEls = [];
+  var rhythmDotEls = [];
+  var rhythmPattern = [];
+  var rhythmBpm = 60;
+  var rhythmBeatSec = 1;
+  var rhythmLat = 0;
+  var rhythmBase = 0;
+  var rhythmStart = 0;
+  var rhythmModelTimeline = null;
+  var rhythmSoundQueue = [];
+  var rhythmTaps = [];
+
   // 島ごとの問題画面の設定
   var ISLANDS = {
     doremi: {
@@ -102,6 +135,8 @@ window.ONPU = window.ONPU || {};
         debugBadge.hidden = true;
       }
     }
+
+    updateRhythmSpeedButton();
   }
 
   // 画面（section）の切り替え
@@ -307,6 +342,81 @@ window.ONPU = window.ONPU || {};
     buildLevelCards();
   }
 
+  // リズムの森のレベルを選ぶカードを作って動作を登録する
+  function buildRhythmLevelCards() {
+    var container = document.getElementById("level-cards");
+    if (!container || !ONPU.rhythm || !Array.isArray(ONPU.rhythm.LEVELS)) {
+      return;
+    }
+    var list = ONPU.rhythm.LEVELS;
+    container.innerHTML = "";
+    for (var i = 0; i < list.length; i++) {
+      var lv = list[i];
+      var btnId = "btn-rhythm-level-" + lv.level;
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.id = btnId;
+      btn.className = "level-card";
+
+      var badge = document.createElement("span");
+      badge.className = "level-badge";
+      badge.style.backgroundColor = lv.color;
+      badge.textContent = String(lv.level);
+
+      var nameEl = document.createElement("span");
+      nameEl.className = "level-name";
+      nameEl.textContent = getText("level.name", { level: lv.level });
+
+      var descEl = document.createElement("span");
+      descEl.className = "level-desc";
+      descEl.textContent = getText(lv.textId);
+
+      btn.appendChild(badge);
+      btn.appendChild(nameEl);
+      btn.appendChild(descEl);
+      container.appendChild(btn);
+
+      (function (buttonId, levelInfo) {
+        bindButton(buttonId, function () {
+          startRhythmSession(levelInfo);
+        });
+      })(btnId, lv);
+    }
+  }
+
+  // レベルを選ぶ画面を開く
+  function openLevelScreen(islandKey) {
+    stopQuizTimer();
+    stopRhythmRound();
+    var screenEl = document.getElementById("screen-level");
+    var titleEl = document.getElementById("level-title");
+    var tabsEl = document.getElementById("level-tabs");
+    if (islandKey === "rhythm") {
+      if (screenEl) {
+        screenEl.style.backgroundColor = "var(--rhythm-bg)";
+      }
+      if (titleEl) {
+        titleEl.textContent = getText("rhythm.title");
+      }
+      if (tabsEl) {
+        tabsEl.style.display = "none";
+      }
+      buildRhythmLevelCards();
+    } else {
+      if (screenEl) {
+        screenEl.style.backgroundColor = "var(--doremi-bg)";
+      }
+      if (titleEl) {
+        titleEl.textContent = getText("map.island.doremi");
+      }
+      if (tabsEl) {
+        tabsEl.style.display = "";
+      }
+      selectClef(currentClef);
+    }
+    showScreen("screen-level");
+  }
+
   // 正解・不正解の演出を元に戻す
   function resetQuizFeedback() {
     var mascotEl = document.getElementById("quiz-mascot");
@@ -474,6 +584,79 @@ window.ONPU = window.ONPU || {};
         correct: correct
       });
     }
+
+    var clearScreen = document.getElementById("screen-clear");
+    if (clearScreen) {
+      clearScreen.classList.remove("rhythm");
+    }
+    clearKind = "doremi";
+
+    showScreen("screen-clear");
+
+    if (stars >= 1 && ONPU.audio && typeof ONPU.audio.playMelody === "function") {
+      ONPU.audio.playMelody("clear");
+    }
+  }
+
+  // リズムの森のクリア画面を表示する
+  function showRhythmClearScreen() {
+    if (!ONPU.rhythm || !ONPU.quiz) {
+      return;
+    }
+    var score = ONPU.rhythm.scoreOf(rhythmResults);
+    var stars = ONPU.quiz.calcStars(score, 100);
+
+    var titleEl = document.getElementById("clear-title");
+    if (titleEl) {
+      titleEl.textContent = stars >= 1 ? getText("clear.title") : getText("clear.title.miss");
+    }
+
+    var starsEl = document.getElementById("clear-stars");
+    if (starsEl) {
+      var starText = "";
+      for (var i = 0; i < 3; i++) {
+        starText += i < stars ? "★" : "☆";
+      }
+      starsEl.textContent = starText;
+    }
+
+    var scoreNumEl = document.getElementById("clear-score-num");
+    if (scoreNumEl) {
+      scoreNumEl.textContent = String(score);
+    }
+
+    var qdotsEl = document.getElementById("clear-qdots");
+    if (qdotsEl) {
+      qdotsEl.innerHTML = "";
+      for (var k = 0; k < rhythmResults.length; k++) {
+        var r = rhythmResults[k];
+        var cls = (r === "pittari" || r === "oshii") ? r : "retry";
+        var pt = (ONPU.rhythm.POINTS && Object.prototype.hasOwnProperty.call(ONPU.rhythm.POINTS, cls))
+          ? ONPU.rhythm.POINTS[cls]
+          : 0;
+
+        var dot = document.createElement("div");
+        dot.className = "clear-qdot " + cls;
+
+        var numSpan = document.createElement("span");
+        numSpan.className = "clear-qdot-num";
+        numSpan.textContent = getText("rhythm.clear.qnum", { num: k + 1 });
+
+        var ptSpan = document.createElement("span");
+        ptSpan.className = "clear-qdot-pt";
+        ptSpan.textContent = String(pt);
+
+        dot.appendChild(numSpan);
+        dot.appendChild(ptSpan);
+        qdotsEl.appendChild(dot);
+      }
+    }
+
+    var clearScreen = document.getElementById("screen-clear");
+    if (clearScreen) {
+      clearScreen.classList.add("rhythm");
+    }
+    clearKind = "rhythm";
 
     showScreen("screen-clear");
 
@@ -647,6 +830,405 @@ window.ONPU = window.ONPU || {};
     showScreen("screen-quiz");
   }
 
+  // リズムの森のはやさのボタンの表示を更新する
+  function updateRhythmSpeedButton() {
+    var btn = document.getElementById("btn-rhythm-speed");
+    if (!btn) {
+      return;
+    }
+    btn.textContent = getText("rhythm.speed", {
+      speed: getText("rhythm.speed." + rhythmSpeedKey)
+    });
+  }
+
+  // リズムの森のカードの上の一言を更新する
+  function setRhythmLead(text, isCount) {
+    var leadEl = document.getElementById("rhythm-lead");
+    if (!leadEl) {
+      return;
+    }
+    if (leadEl.textContent !== text) {
+      leadEl.textContent = text;
+    }
+    leadEl.classList.toggle("count", Boolean(isCount));
+  }
+
+  // リズムの森の今の拍のカードを光らせる（-1 のときはすべて消す）
+  function setActiveRhythmCard(activeIdx) {
+    for (var i = 0; i < rhythmCardEls.length; i++) {
+      rhythmCardEls[i].classList.toggle("active", i === activeIdx);
+    }
+  }
+
+  // リズムの森の点をすべて「たたく前」にもどす
+  function resetRhythmDots() {
+    for (var i = 0; i < rhythmDotEls.length; i++) {
+      rhythmDotEls[i].className = "rhythm-dot";
+    }
+  }
+
+  // リズムの森の結果の吹き出しを消す
+  function hideRhythmBubble() {
+    var bubbleEl = document.getElementById("rhythm-bubble");
+    if (bubbleEl) {
+      bubbleEl.hidden = true;
+      bubbleEl.classList.remove("pop");
+      bubbleEl.textContent = "";
+    }
+  }
+
+  // リズムの森の結果のあとのボタンを消す
+  function hideRhythmFlowButtons() {
+    var retryBtn = document.getElementById("btn-rhythm-retry");
+    if (retryBtn) {
+      retryBtn.hidden = true;
+    }
+    var nextBtn = document.getElementById("btn-rhythm-next");
+    if (nextBtn) {
+      nextBtn.hidden = true;
+    }
+  }
+
+  // リズムの森の1回の記録を捨てる
+  function clearRhythmSession() {
+    rhythmQuestions = [];
+    rhythmQIndex = 0;
+    rhythmAttempt = 1;
+    rhythmResults = [];
+    rhythmLastResult = null;
+  }
+
+  // リズムの森の進行中の繰り返しとタイマーをすべて止め、表示を初期状態にもどす
+  function stopRhythmRound() {
+    if (rhythmRafId !== null) {
+      cancelAnimationFrame(rhythmRafId);
+      rhythmRafId = null;
+    }
+    if (rhythmAutoTimerId !== null) {
+      clearTimeout(rhythmAutoTimerId);
+      rhythmAutoTimerId = null;
+    }
+    if (rhythmFlowTimerId !== null) {
+      clearTimeout(rhythmFlowTimerId);
+      rhythmFlowTimerId = null;
+    }
+    for (var i = 0; i < rhythmDotTimers.length; i++) {
+      clearTimeout(rhythmDotTimers[i]);
+    }
+    rhythmDotTimers = [];
+    rhythmSoundQueue = [];
+    rhythmTaps = [];
+    rhythmState = "waiting";
+    setActiveRhythmCard(-1);
+    setRhythmLead(getText("rhythm.lead"), false);
+    hideRhythmBubble();
+    hideRhythmFlowButtons();
+    resetRhythmDots();
+  }
+
+  // リズムの森の今の問題のカードと点の列、進み具合を作る
+  function renderRhythmPattern() {
+    rhythmPattern = rhythmQuestions[rhythmQIndex] || [];
+    var total = rhythmQuestions.length;
+    var currentNum = rhythmQIndex + 1;
+
+    var progDotsEl = document.getElementById("rhythm-progress-dots");
+    if (progDotsEl) {
+      progDotsEl.innerHTML = "";
+      for (var p = 0; p < total; p++) {
+        var pDot = document.createElement("div");
+        pDot.className = p < currentNum ? "quiz-dot filled" : "quiz-dot";
+        progDotsEl.appendChild(pDot);
+      }
+    }
+
+    var progTextEl = document.getElementById("rhythm-progress-text");
+    if (progTextEl) {
+      progTextEl.textContent = getText("quiz.progress", {
+        current: currentNum,
+        total: total
+      });
+    }
+
+    var cardsContainer = document.getElementById("rhythm-cards");
+    var dotsContainer = document.getElementById("rhythm-dots");
+    rhythmCardEls = [];
+    rhythmDotEls = [];
+    if (!cardsContainer || !dotsContainer) {
+      return;
+    }
+    cardsContainer.innerHTML = "";
+    dotsContainer.innerHTML = "";
+
+    for (var i = 0; i < rhythmPattern.length; i++) {
+      var id = rhythmPattern[i];
+      var isWide = id === "taan";
+      var w = RHYTHM_GLYPH_WIDTH[id] || 34;
+
+      var cardEl = document.createElement("div");
+      cardEl.className = isWide ? "rhythm-card wide" : "rhythm-card";
+      cardEl.innerHTML =
+        '<svg width="' + w + '" height="104" aria-hidden="true"><use href="#glyph-' + id + '"/></svg>' +
+        '<span class="rhythm-card-label">' + getText("rhythm.card." + id) + "</span>";
+      cardsContainer.appendChild(cardEl);
+      rhythmCardEls.push(cardEl);
+
+      var colEl = document.createElement("div");
+      colEl.className = isWide ? "rhythm-dot-col wide" : "rhythm-dot-col";
+      var hitCount = (ONPU.rhythm && ONPU.rhythm.CARDS && ONPU.rhythm.CARDS[id])
+        ? ONPU.rhythm.CARDS[id].hits.length
+        : 0;
+      for (var k = 0; k < hitCount; k++) {
+        var dotEl = document.createElement("div");
+        dotEl.className = "rhythm-dot";
+        colEl.appendChild(dotEl);
+        rhythmDotEls.push(dotEl);
+      }
+      dotsContainer.appendChild(colEl);
+    }
+  }
+
+  // まだ予約していない音のうち、時刻が now + 0.15 秒以内のものだけを予約する
+  function scheduleDueRhythmSounds(now) {
+    if (!ONPU.audio) {
+      return;
+    }
+    for (var i = 0; i < rhythmSoundQueue.length; i++) {
+      var ev = rhythmSoundQueue[i];
+      if (!ev.done && ev.time <= now + 0.15) {
+        ev.done = true;
+        if (ev.kind === "drum" && typeof ONPU.audio.playDrum === "function") {
+          ONPU.audio.playDrum(ev.time);
+        } else if (ev.kind === "note" && typeof ONPU.audio.playNoteAt === "function") {
+          ONPU.audio.playNoteAt(ev.note, ev.time, ev.duration);
+        }
+      }
+    }
+  }
+
+  // 1問の判定を行い、点・吹き出し・メロディを出して結果のあとのボタンを予約する
+  function finishRhythmRound() {
+    if (rhythmRafId !== null) {
+      cancelAnimationFrame(rhythmRafId);
+      rhythmRafId = null;
+    }
+    rhythmState = "result";
+    setActiveRhythmCard(-1);
+    setRhythmLead(getText("rhythm.lead"), false);
+    resetRhythmDots();
+
+    if (!ONPU.rhythm || typeof ONPU.rhythm.judge !== "function") {
+      return;
+    }
+    var win = (ONPU.config && ONPU.config.rhythmWindow)
+      ? ONPU.config.rhythmWindow
+      : { perfect: 0.15, good: 0.30 };
+    var res = ONPU.rhythm.judge(rhythmPattern, rhythmBpm, rhythmTaps, {
+      perfect: win.perfect,
+      good: win.good,
+      offset: rhythmLat
+    });
+    var resultKey = res ? res.result : "retry";
+    rhythmLastResult = resultKey;
+
+    if (res) {
+      for (var i = 0; i < res.notes.length; i++) {
+        (function (idx, grade) {
+          var applyDot = function () {
+            var dot = rhythmDotEls[idx];
+            if (!dot) {
+              return;
+            }
+            dot.className = "rhythm-dot " + grade;
+            restartClass(dot, "pop");
+          };
+          if (idx === 0) {
+            applyDot();
+          } else {
+            var tid = setTimeout(applyDot, idx * 120);
+            rhythmDotTimers.push(tid);
+          }
+        })(i, res.notes[i].grade);
+      }
+
+      var bubbleEl = document.getElementById("rhythm-bubble");
+      if (bubbleEl) {
+        bubbleEl.textContent = getText("rhythm.result." + res.result);
+        bubbleEl.hidden = false;
+        restartClass(bubbleEl, "pop");
+      }
+
+      if (res.result === "pittari" && ONPU.audio && typeof ONPU.audio.playMelody === "function") {
+        var melodyKey = (ONPU.music && typeof ONPU.music.pickCorrectKey === "function")
+          ? ONPU.music.pickCorrectKey(lastCorrectKey)
+          : "correct";
+        ONPU.audio.playMelody(melodyKey);
+        lastCorrectKey = melodyKey;
+      }
+    }
+
+    rhythmFlowTimerId = setTimeout(function () {
+      rhythmFlowTimerId = null;
+      var retryBtn = document.getElementById("btn-rhythm-retry");
+      var nextBtn = document.getElementById("btn-rhythm-next");
+      var retryable = typeof ONPU.rhythm.canRetry === "function" && ONPU.rhythm.canRetry(resultKey, rhythmAttempt);
+      if (retryable) {
+        if (retryBtn) {
+          retryBtn.className = "rhythm-flow-btn";
+          retryBtn.hidden = false;
+        }
+        if (nextBtn) {
+          nextBtn.className = "rhythm-flow-btn sub";
+          nextBtn.hidden = false;
+        }
+      } else {
+        if (retryBtn) {
+          retryBtn.hidden = true;
+        }
+        if (nextBtn) {
+          nextBtn.className = "rhythm-flow-btn";
+          nextBtn.hidden = false;
+        }
+      }
+    }, 600);
+  }
+
+  // requestAnimationFrame で音の予約と画面の表示を進める
+  function tickRhythm() {
+    rhythmRafId = null;
+    var now = (ONPU.audio && typeof ONPU.audio.now === "function") ? ONPU.audio.now() : null;
+    if (now === null) {
+      stopRhythmRound();
+      return;
+    }
+
+    scheduleDueRhythmSounds(now);
+
+    if (now >= rhythmStart + 4 * rhythmBeatSec + rhythmLat + 0.4) {
+      finishRhythmRound();
+      return;
+    }
+
+    var viewNow = now - rhythmLat;
+    var modelEnd = rhythmBase + 4 * rhythmBeatSec;
+    var tapEnd = rhythmStart + 4 * rhythmBeatSec;
+
+    if (viewNow < modelEnd - 1e-9) {
+      rhythmState = "model";
+      setRhythmLead(getText(rhythmAttempt === 2 ? "rhythm.listen.again" : "rhythm.listen"), false);
+      if (viewNow >= rhythmBase - 1e-9) {
+        var modelCardIdx = ONPU.rhythm.cardIndexAt(rhythmPattern, rhythmBpm, viewNow - rhythmBase);
+        setActiveRhythmCard(modelCardIdx);
+        if (rhythmModelTimeline && Array.isArray(rhythmModelTimeline.hits)) {
+          for (var k = 0; k < rhythmModelTimeline.hits.length; k++) {
+            if (viewNow + 1e-9 >= rhythmModelTimeline.hits[k] && rhythmDotEls[k]) {
+              rhythmDotEls[k].classList.add("model");
+            }
+          }
+        }
+      } else {
+        setActiveRhythmCard(-1);
+      }
+    } else if (viewNow < rhythmStart - 1e-9) {
+      rhythmState = "count";
+      setActiveRhythmCard(-1);
+      for (var d = 0; d < rhythmDotEls.length; d++) {
+        rhythmDotEls[d].classList.remove("model");
+      }
+      var beatNum = Math.floor((viewNow - modelEnd + 1e-9) / rhythmBeatSec) + 1;
+      if (beatNum < 1) {
+        beatNum = 1;
+      } else if (beatNum > 4) {
+        beatNum = 4;
+      }
+      setRhythmLead(getText("rhythm.count", { count: beatNum }), true);
+    } else {
+      rhythmState = "tap";
+      setRhythmLead(getText("rhythm.go"), false);
+      for (var d2 = 0; d2 < rhythmDotEls.length; d2++) {
+        rhythmDotEls[d2].classList.remove("model");
+      }
+      if (viewNow < tapEnd - 1e-9) {
+        var tapCardIdx = ONPU.rhythm.cardIndexAt(rhythmPattern, rhythmBpm, viewNow - rhythmStart);
+        setActiveRhythmCard(tapCardIdx);
+      } else {
+        setActiveRhythmCard(-1);
+      }
+    }
+
+    rhythmRafId = requestAnimationFrame(tickRhythm);
+  }
+
+  // 今の問題をお手本から始める
+  function startRhythmPlayback() {
+    stopRhythmRound();
+    if (!ONPU.rhythm || !ONPU.audio || typeof ONPU.audio.now !== "function") {
+      return;
+    }
+    var now = ONPU.audio.now();
+    if (now === null) {
+      return;
+    }
+    var info = typeof ONPU.audio.getLatency === "function" ? ONPU.audio.getLatency() : null;
+    rhythmLat = info ? ONPU.rhythm.latencyFrom(info.base, info.output) : 0;
+    rhythmPattern = rhythmQuestions[rhythmQIndex] || [];
+    rhythmBpm = (ONPU.rhythm.SPEEDS && ONPU.rhythm.SPEEDS[rhythmSpeedKey]) ? ONPU.rhythm.SPEEDS[rhythmSpeedKey] : 60;
+    rhythmBeatSec = 60 / rhythmBpm;
+    rhythmBase = now + 0.3;
+    rhythmStart = rhythmBase + 8 * rhythmBeatSec;
+
+    rhythmModelTimeline = ONPU.rhythm.timeline(rhythmPattern, rhythmBpm, rhythmBase);
+    var countTimes = ONPU.rhythm.countInTimes(rhythmBpm, rhythmStart);
+
+    rhythmSoundQueue = [];
+    if (rhythmModelTimeline && Array.isArray(rhythmModelTimeline.hits)) {
+      for (var i = 0; i < rhythmModelTimeline.hits.length; i++) {
+        rhythmSoundQueue.push({
+          time: rhythmModelTimeline.hits[i],
+          kind: "drum",
+          done: false
+        });
+      }
+    }
+    for (var j = 0; j < countTimes.length; j++) {
+      rhythmSoundQueue.push({
+        time: countTimes[j],
+        kind: "note",
+        note: j === 0 ? "C6" : "C5",
+        duration: 0.1,
+        done: false
+      });
+    }
+
+    rhythmTaps = [];
+    rhythmState = "model";
+    setRhythmLead(getText(rhythmAttempt === 2 ? "rhythm.listen.again" : "rhythm.listen"), false);
+    scheduleDueRhythmSounds(now);
+    rhythmRafId = requestAnimationFrame(tickRhythm);
+  }
+
+  // リズムの森の1回（5問）を始める
+  function startRhythmSession(lv) {
+    if (!lv || !ONPU.rhythm) {
+      return;
+    }
+    stopQuizTimer();
+    stopRhythmRound();
+    rhythmLevel = lv;
+    rhythmQuestions = ONPU.rhythm.pickPatterns(lv.pool, ONPU.rhythm.QUESTION_COUNT);
+    rhythmQIndex = 0;
+    rhythmAttempt = 1;
+    rhythmResults = [];
+    rhythmLastResult = null;
+    updateRhythmSpeedButton();
+    renderRhythmPattern();
+    showScreen("screen-rhythm");
+    rhythmAutoTimerId = setTimeout(function () {
+      rhythmAutoTimerId = null;
+      startRhythmPlayback();
+    }, 600);
+  }
+
   // 初期化
   function init() {
     buildSoundKeys();
@@ -688,8 +1270,111 @@ window.ONPU = window.ONPU || {};
 
     // ドレミの島 → レベルを選ぶ画面へ
     bindButton("island-doremi", function () {
-      stopQuizTimer();
-      showScreen("screen-level");
+      openLevelScreen("doremi");
+    });
+
+    // リズムの森 → レベルを選ぶ画面へ
+    bindButton("island-rhythm", function () {
+      openLevelScreen("rhythm");
+    });
+
+    // リズムの森「ちずへ」 → 進めている1問を止め、1回の記録を捨てて地図にもどる
+    bindButton("btn-rhythm-map", function () {
+      stopRhythmRound();
+      clearRhythmSession();
+      showScreen("screen-map");
+    });
+
+    // リズムの森「おてほん」 → いつ押しても、進めている1問を止めて同じ問題をお手本から始め直す
+    bindButton("btn-rhythm-model", function () {
+      startRhythmPlayback();
+    });
+
+    // リズムの森「はやさ」 → いつ押しても、進めている1問を止めて速さを変え、同じ問題をお手本から始め直す
+    bindButton("btn-rhythm-speed", function () {
+      var idx = RHYTHM_SPEED_ORDER.indexOf(rhythmSpeedKey);
+      rhythmSpeedKey = RHYTHM_SPEED_ORDER[(idx + 1) % RHYTHM_SPEED_ORDER.length];
+      updateRhythmSpeedButton();
+      startRhythmPlayback();
+    });
+
+    // リズムの森［もういちど］ → 結果のあとだけ受け付け、同じ問題を2回目としてお手本から始める
+    bindButton("btn-rhythm-retry", function () {
+      var retryBtn = document.getElementById("btn-rhythm-retry");
+      if (rhythmState !== "result" || !retryBtn || retryBtn.hidden) {
+        return;
+      }
+      rhythmAttempt = 2;
+      stopRhythmRound();
+      rhythmAutoTimerId = setTimeout(function () {
+        rhythmAutoTimerId = null;
+        startRhythmPlayback();
+      }, 600);
+    });
+
+    // リズムの森［つぎへ］ → 結果のあとだけ受け付け、結果を記録して次の問題またはクリア画面へ進む
+    bindButton("btn-rhythm-next", function () {
+      var nextBtn = document.getElementById("btn-rhythm-next");
+      if (rhythmState !== "result" || !nextBtn || nextBtn.hidden) {
+        return;
+      }
+      rhythmResults[rhythmQIndex] = rhythmLastResult;
+      stopRhythmRound();
+      if (rhythmQIndex + 1 >= rhythmQuestions.length) {
+        showRhythmClearScreen();
+        return;
+      }
+      rhythmQIndex += 1;
+      rhythmAttempt = 1;
+      renderRhythmPattern();
+      rhythmAutoTimerId = setTimeout(function () {
+        rhythmAutoTimerId = null;
+        startRhythmPlayback();
+      }, 600);
+    });
+
+    // リズムの森「ドン！」 → pointerdown で今すぐたいこを鳴らし、カウント・たたく状態のとき時刻を記録する
+    var donBtn = document.getElementById("btn-rhythm-don");
+    if (donBtn) {
+      donBtn.addEventListener("pointerdown", function (e) {
+        if (e.button !== undefined && e.button !== 0) {
+          return;
+        }
+        e.preventDefault();
+        donBtn.classList.add("pressed");
+        if (ONPU.audio && typeof ONPU.audio.playDrum === "function") {
+          ONPU.audio.playDrum();
+        }
+        if ((rhythmState === "count" || rhythmState === "tap") && ONPU.audio && typeof ONPU.audio.now === "function") {
+          var tapNow = ONPU.audio.now();
+          if (tapNow !== null) {
+            var rel = tapNow - rhythmStart;
+            if (rel >= -0.5 * rhythmBeatSec) {
+              rhythmTaps.push(rel);
+            }
+          }
+        }
+      });
+      var clearDonPressed = function () {
+        donBtn.classList.remove("pressed");
+      };
+      donBtn.addEventListener("pointerup", clearDonPressed);
+      donBtn.addEventListener("pointerleave", clearDonPressed);
+      donBtn.addEventListener("pointercancel", clearDonPressed);
+    }
+
+    // 画面が隠れたとき → リズムの森の進行中（お手本・カウント・たたく）のときだけ止める
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") {
+        var rhythmScreen = document.getElementById("screen-rhythm");
+        if (
+          rhythmScreen &&
+          rhythmScreen.classList.contains("active") &&
+          (rhythmState === "model" || rhythmState === "count" || rhythmState === "tap")
+        ) {
+          stopRhythmRound();
+        }
+      }
     });
 
     // レベルを選ぶ画面「ちずへ」 → 地図にもどる
@@ -723,7 +1408,11 @@ window.ONPU = window.ONPU || {};
 
     // クリア画面「もういちど」 → 同じレベルをはじめからやり直す
     bindButton("btn-clear-retry", function () {
-      if (currentIslandKey) {
+      if (clearKind === "rhythm") {
+        if (rhythmLevel) {
+          startRhythmSession(rhythmLevel);
+        }
+      } else if (currentIslandKey) {
         startQuiz(currentIslandKey, currentLevel);
       }
     });
@@ -731,13 +1420,14 @@ window.ONPU = window.ONPU || {};
     // クリア画面「つぎの しまへ」 → 地図にもどる
     bindButton("btn-clear-next", function () {
       stopQuizTimer();
+      stopRhythmRound();
       currentSession = null;
+      clearRhythmSession();
       showScreen("screen-map");
     });
 
     // 準備中の案内を出すボタン群
     var preparingIds = [
-      "island-rhythm",
       "island-puzzle",
       "btn-stamp",
       "btn-instruments"
