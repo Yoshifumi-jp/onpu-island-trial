@@ -50,6 +50,8 @@ window.ONPU = window.ONPU || {};
   var rhythmModelTimeline = null;
   var rhythmSoundQueue = [];
   var rhythmTaps = [];
+  var rhythmLeadText = null;
+  var rhythmLeadBeatNum = null;
 
   // 島ごとの問題画面の設定
   var ISLANDS = {
@@ -842,13 +844,23 @@ window.ONPU = window.ONPU || {};
   }
 
   // リズムの森のカードの上の一言を更新する
-  function setRhythmLead(text, isCount) {
+  function setRhythmLead(text, isCount, beatNum) {
     var leadEl = document.getElementById("rhythm-lead");
     if (!leadEl) {
       return;
     }
-    if (leadEl.textContent !== text) {
+    var hasBeatNum = typeof beatNum === "number" && isFinite(beatNum) && Math.floor(beatNum) === beatNum && beatNum >= 1 && beatNum <= 4;
+    var numKey = hasBeatNum ? beatNum : null;
+    if (rhythmLeadText !== text || rhythmLeadBeatNum !== numKey) {
+      rhythmLeadText = text;
+      rhythmLeadBeatNum = numKey;
       leadEl.textContent = text;
+      if (hasBeatNum) {
+        var numSpan = document.createElement("span");
+        numSpan.className = "rhythm-lead-num";
+        numSpan.textContent = getText("rhythm.count", { count: beatNum });
+        leadEl.appendChild(numSpan);
+      }
     }
     leadEl.classList.toggle("count", Boolean(isCount));
   }
@@ -1000,7 +1012,7 @@ window.ONPU = window.ONPU || {};
         if (ev.kind === "drum" && typeof ONPU.audio.playDrum === "function") {
           ONPU.audio.playDrum(ev.time);
         } else if (ev.kind === "note" && typeof ONPU.audio.playNoteAt === "function") {
-          ONPU.audio.playNoteAt(ev.note, ev.time, ev.duration);
+          ONPU.audio.playNoteAt(ev.note, ev.time, ev.duration, ev.volume);
         }
       }
     }
@@ -1144,14 +1156,21 @@ window.ONPU = window.ONPU || {};
       setRhythmLead(getText("rhythm.count", { count: beatNum }), true);
     } else {
       rhythmState = "tap";
-      setRhythmLead(getText("rhythm.go"), false);
       for (var d2 = 0; d2 < rhythmDotEls.length; d2++) {
         rhythmDotEls[d2].classList.remove("model");
       }
       if (viewNow < tapEnd - 1e-9) {
+        var tapBeatNum = Math.floor((viewNow - rhythmStart + 1e-9) / rhythmBeatSec) + 1;
+        if (tapBeatNum < 1) {
+          tapBeatNum = 1;
+        } else if (tapBeatNum > 4) {
+          tapBeatNum = 4;
+        }
+        setRhythmLead(getText("rhythm.go"), false, tapBeatNum);
         var tapCardIdx = ONPU.rhythm.cardIndexAt(rhythmPattern, rhythmBpm, viewNow - rhythmStart);
         setActiveRhythmCard(tapCardIdx);
       } else {
+        setRhythmLead(getText("rhythm.go"), false);
         setActiveRhythmCard(-1);
       }
     }
@@ -1179,6 +1198,7 @@ window.ONPU = window.ONPU || {};
 
     rhythmModelTimeline = ONPU.rhythm.timeline(rhythmPattern, rhythmBpm, rhythmBase);
     var countTimes = ONPU.rhythm.countInTimes(rhythmBpm, rhythmStart);
+    var tapTimes = ONPU.rhythm.tapBeatTimes(rhythmBpm, rhythmStart);
 
     rhythmSoundQueue = [];
     if (rhythmModelTimeline && Array.isArray(rhythmModelTimeline.hits)) {
@@ -1196,6 +1216,16 @@ window.ONPU = window.ONPU || {};
         kind: "note",
         note: j === 0 ? "C6" : "C5",
         duration: 0.1,
+        done: false
+      });
+    }
+    for (var m = 0; m < tapTimes.length; m++) {
+      rhythmSoundQueue.push({
+        time: tapTimes[m],
+        kind: "note",
+        note: m === 0 ? "C6" : "C5",
+        duration: 0.1,
+        volume: ONPU.rhythm.TAP_BEAT_VOLUME,
         done: false
       });
     }

@@ -897,6 +897,11 @@ button:active {
   line-height: 1;
 }
 
+.rhythm-lead-num {
+  font-size: 44px;
+  margin-left: 14px;
+}
+
 .rhythm-cards {
   position: absolute;
   left: 121px;

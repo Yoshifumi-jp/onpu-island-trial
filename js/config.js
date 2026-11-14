@@ -2,7 +2,7 @@ window.ONPU = window.ONPU || {};
 
 // 版の設定。version を変えるときは、index.html の css・js の読み込み先の ?v= もすべて同じ版にする
 ONPU.config = {
-  version: "v0.3.3",
+  version: "v0.3.4",
   debug: false,          // URL に ?debug=1 があるとき true
   questionCount: 10,     // 1回の問題数（デバッグのときは 3）
   allIslandsOpen: false, // 全部の島を開く（デバッグのときは true）

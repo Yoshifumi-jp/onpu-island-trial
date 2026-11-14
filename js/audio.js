@@ -86,15 +86,16 @@ window.ONPU = window.ONPU || {};
     ensureContext(true);
   }
 
-  // 指定した時刻（startTime）と長さ（duration）でピアノ風の音を予約する
-  function schedulePianoNote(ctx, freq, startTime, duration) {
+  // 指定した時刻（startTime）・長さ（duration）・音の大きさ（volume）でピアノ風の音を予約する
+  function schedulePianoNote(ctx, freq, startTime, duration, volume) {
+    var vol = (typeof volume === "number" && isFinite(volume) && volume > 0 && volume <= 1) ? volume : 1;
     var endTime = startTime + duration + 0.6;
 
-    // 音量のエンベロープ（0 → 0.005秒で 0.5 → duration+0.6秒で 0.001）
+    // 音量のエンベロープ（0 → 0.005秒で 0.5 * vol → duration+0.6秒で 0.001 * vol）
     var envGain = ctx.createGain();
     envGain.gain.setValueAtTime(0, startTime);
-    envGain.gain.linearRampToValueAtTime(0.5, startTime + 0.005);
-    envGain.gain.exponentialRampToValueAtTime(0.001, endTime);
+    envGain.gain.linearRampToValueAtTime(0.5 * vol, startTime + 0.005);
+    envGain.gain.exponentialRampToValueAtTime(0.001 * vol, endTime);
     envGain.connect(masterGain);
 
     // 三角波（周波数どおり、音量 1.0）
@@ -143,7 +144,7 @@ window.ONPU = window.ONPU || {};
   }
 
   // ピアノ風の1音を指定した時刻に予約する（duration を省いたときは 0.1秒）
-  function playNoteAt(name, when, duration) {
+  function playNoteAt(name, when, duration, volume) {
     if (!ONPU.music || typeof ONPU.music.noteToFrequency !== "function") {
       return;
     }
@@ -160,7 +161,7 @@ window.ONPU = window.ONPU || {};
       var startTime = (typeof when === "number" && isFinite(when))
         ? Math.max(when, ctx.currentTime)
         : ctx.currentTime;
-      schedulePianoNote(ctx, freq, startTime, dur);
+      schedulePianoNote(ctx, freq, startTime, dur, volume);
     } catch (e) {
       // 音の再生に失敗しても画面は止めない
     }

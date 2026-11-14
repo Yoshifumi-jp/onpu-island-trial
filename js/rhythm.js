@@ -31,6 +31,9 @@ window.ONPU = window.ONPU || {};
   // 音の遅れの上限（秒）
   var MAX_LATENCY = 0.25;
 
+  // たたく4拍の拍の音の大きさ（カウントの音を 1 としたときの倍率）
+  var TAP_BEAT_VOLUME = 0.5;
+
   // 1回の問題数
   var QUESTION_COUNT = 5;
 
@@ -345,6 +348,20 @@ window.ONPU = window.ONPU || {};
     ];
   }
 
+  // 子どもがたたく4拍の頭の時刻を返す
+  function tapBeatTimes(bpm, start) {
+    if (!isPositiveNumber(bpm) || !isFiniteNumber(start)) {
+      return [];
+    }
+    var secPerBeat = 60 / bpm;
+    return [
+      start,
+      start + 1 * secPerBeat,
+      start + 2 * secPerBeat,
+      start + 3 * secPerBeat
+    ];
+  }
+
   // 小節の頭からの経過 elapsed（秒）のときに鳴っているカードの番号（0 から）を返す
   function cardIndexAt(pattern, bpm, elapsed) {
     if (!isFiniteNumber(elapsed)) {
@@ -422,6 +439,7 @@ window.ONPU = window.ONPU || {};
     SPEEDS: SPEEDS,
     DEFAULT_WINDOW: DEFAULT_WINDOW,
     MAX_LATENCY: MAX_LATENCY,
+    TAP_BEAT_VOLUME: TAP_BEAT_VOLUME,
     QUESTION_COUNT: QUESTION_COUNT,
     POINTS: POINTS,
     LEVELS: LEVELS,
@@ -433,6 +451,7 @@ window.ONPU = window.ONPU || {};
     latencyFrom: latencyFrom,
     timeline: timeline,
     countInTimes: countInTimes,
+    tapBeatTimes: tapBeatTimes,
     cardIndexAt: cardIndexAt,
     pickPatterns: pickPatterns,
     scoreOf: scoreOf,
